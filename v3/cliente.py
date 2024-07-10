@@ -10,11 +10,11 @@ import json
 from criptografia import (
     criptografar_mensagem, descriptografar_mensagem,
     gerar_chave_dh, calcular_chave_compartilhada,
-    gerar_par_chaves_rsa, gerar_nonce, gerar_carimbo_tempo
+    gerar_par_chaves_rsa
 )
 
 # Configurações do cliente
-HOST = 'localhost'
+HOST = '127.0.0.1'
 PORT = 5000
 
 # Função para receber mensagens do servidor
@@ -25,7 +25,7 @@ def receber_mensagens(socket_cliente, chave_simetrica):
             if not resposta_encriptada:
                 break
             resposta = descriptografar_mensagem(chave_simetrica, resposta_encriptada).decode()
-            print(f'\rMensagem recebida: {resposta}\nPara: ', end='')
+            print(f'\r<<Mensagem recebida>>\n\t\t{resposta}\nPara: ', end='')
         except Exception as e:
             print(f'Erro ao receber mensagem: {e}')
             break
@@ -52,12 +52,10 @@ chave_privada_rsa = RSA.generate(2048)
 chave_publica_rsa = chave_privada_rsa.publickey()
 print('Par de chaves RSA gerado.')
 
-# Enviar nome do cliente, chave pública RSA criptografada, nonce e carimbo de tempo
+# Enviar nome do cliente e chave pública RSA criptografada
 nome_cliente = input('Digite seu nome: ')
-nonce = gerar_nonce()
-carimbo_tempo = gerar_carimbo_tempo()
-dados = f'{nome_cliente},{nonce.hex()},{carimbo_tempo.decode()}'
-dados_criptografados = criptografar_mensagem(chave_simetrica, dados.encode())
+dados = f'{nome_cliente}'
+dados_criptografados = criptografar_mensagem(chave_simetrica, dados)
 socket_cliente.sendall(dados_criptografados)
 socket_cliente.sendall(chave_publica_rsa.export_key())
 
@@ -75,7 +73,7 @@ try:
         destinatario = input('Para: ')
         mensagem = input('Mensagem: ')
         mensagem_enviar = f'{destinatario}:{mensagem}'
-        mensagem_encriptada = criptografar_mensagem(chave_simetrica, mensagem_enviar.encode())
+        mensagem_encriptada = criptografar_mensagem(chave_simetrica, mensagem_enviar)
         socket_cliente.sendall(mensagem_encriptada)
 except Exception as e:
     print(f'Erro: {e}')
